@@ -1,0 +1,127 @@
+clc
+clear
+close all
+
+fs = 5120;
+time = 1;
+t = 0:1/fs:time-1/fs;
+x = zeros(fs, 3);
+x(:, 1) = 2*(1+0.5*(sin(2*pi*t))).*sin(60*pi*t);
+x(:, 2) = sin(120*pi*t);
+x(:, 3) = 0.5*cos(10*pi*t);
+sig = sum(x, 2);
+
+%% signal 1
+dd = 50:10:500;
+n = length(dd);
+tt = zeros(7, n);
+
+% for j = 1:15
+% for d = dd
+%     k = d / 10 - 4;
+% 
+%     fs = 5120;
+%     time = 1;
+%     t = 0:1/fs:time-1/fs;
+%     x = zeros(fs, 3);
+%     x(:, 1) = 2*(1+0.5*(sin(2*pi*t))).*sin(60*pi*t);
+%     x(:, 2) = sin(120*pi*t);
+%     x(:, 3) = 0.5*cos(10*pi*t);
+%     sig = sum(x, 2);
+% 
+%     tau = 1;
+%     n_cluster = 3;
+%     threshold_corr = 0.85;
+%     threshold_nmse = 0.01;
+%     threshold_svd = 1;
+% 
+%     SGCs = cell(7, 1);
+%     [SGCs{1}, T] =SGMD_SVD(sig,fs,1,n_cluster, ...
+%         threshold_corr,threshold_nmse,'nmse',false,d);
+%     tt(1, k) = tt(1, k) + T;
+%     periodic_extension = false;
+%     for i = 2:4
+%         [SGCs{i}, ~, T] = SpSSA(sig, fs, i-1, n_cluster, ...
+%             threshold_corr, threshold_nmse, threshold_svd, ...
+%             'kmeans', periodic_extension, [], d);
+%         tt(i, k) = tt(i, k) + T;
+%     end
+%     periodic_extension = true;
+%     for i = 5:7
+%         [SGCs{i}, ~, T] = SpSSA(sig, fs, i-4, n_cluster, ...
+%             threshold_corr, threshold_nmse, threshold_svd, ...
+%             'kmeans', periodic_extension, [], d);
+%         tt(i, k) = tt(i, k) + T;
+%     end
+% 
+% end
+% end
+
+tt = tt / 15;
+
+%%
+dd = 50:10:500;
+load("time.mat");
+
+fig = figure('Units','pixels', 'Position', [100, 100, 850, 800]);
+
+color_map = lines;
+% color_map = {'black','blue','blue','blue','red','red','red'}
+markers = {'o','s','^','d','v','>','p'};
+for i = 1:7
+    idx = 1:length(dd);
+    if i == 2 || i == 4
+        lw = 1.3;
+    else
+        lw = 1;
+    end
+    plot(dd(idx), tt(i,idx), ...
+        '-','LineWidth',lw, ...
+        'Color',color_map(i,:), ...
+        'Marker',markers{i}, ...
+        'MarkerFaceColor',[1 1 1], ...   % 白心
+        'MarkerEdgeColor',color_map(i,:), ...
+        'MarkerSize',6);
+    % plot(dd(idx), tt(i,idx), ...
+    %     '-','LineWidth',1.5, ...
+    %     'Color',color_map(i, :));
+    hold on
+end
+
+% 每一条曲线对应一个名字
+lgd_names = { ...
+    'SGMD', ...            % i = 1
+    'SpSSA$_{\tau=1}$', ... % i = 2
+    'SpSSA$_{\tau=2}$', ... % i = 3
+    'SpSSA$_{\tau=3}$', ... % i = 4
+    'CsSpSSA$_{\tau=1}$', ...     % i = 5
+    'CsSpSSA$_{\tau=2}$', ...     % i = 6
+    'CsSpSSA$_{\tau=3}$' ...      % i = 7
+};
+xlim([45, 505])
+xticks(dd)
+labels = string(dd);
+labels(mod(dd,50)~=0) = "";
+xticklabels(labels)
+xtickangle(90)
+xlabel("$d$", 'Interpreter','latex')
+ylabel("Running time (s)")
+legend(lgd_names, 'Interpreter','latex','Location', 'northwest','FontSize',16);
+set(gca,'fontsize',16,'LineWidth',1.0,'TickLength',[0.01, 0.02],'Box','on')
+set(findall(gcf,'-property','FontName'),'FontName','Times New Roman');
+print('./pic/running_time.png', '-dpng', '-r400');
+
+% % 你想放大的区域范围（改这里）
+% x1 = 50; x2 = 150;
+% y1 = 0.1; y2 = 2.6;
+% % 主图上画出放大框
+% rectangle('Position',[x1 y1 (x2-x1) (y2-y1)], ...
+%           'EdgeColor','k','LineWidth',1.2);
+% % 在右上角放一个放大窗（位置可调 [left bottom width height]，单位是归一化）
+% axInset = axes('Position',[0.1 0.35 0.30 0.10]);
+% box on; hold(axInset,'on')
+% for i = 1:7
+% plot(dd, tt(i,:), 'LineWidth', 1.2);  % 也可以只画你需要的曲线
+% end
+% xlim([x1 x2]); ylim([y1 y2]);
+% set(axInset,'FontSize',9)
